@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private AI Training - Confidential Machine Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .wallet-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .connect-btn {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .connect-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+        }
+
+        .status-indicator.connected {
+            background: #51cf66;
+            box-shadow: 0 0 8px rgba(81, 207, 102, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #00d2ff;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #00d2ff;
+            box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-item h4 {
+            color: #00d2ff;
+            margin-bottom: 5px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #00d2ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert.success {
+            background: #d3f9d8;
+            color: #2b8a3e;
+            border: 1px solid #8ce99a;
+            box-shadow: 0 4px 12px rgba(81, 207, 102, 0.2);
+        }
+
+        .alert.error {
+            background: #ffe3e3;
+            color: #c92a2a;
+            border: 1px solid #ffa8a8;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+        }
+
+        .stats-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0, 210, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0, 210, 255, 0.4);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .wallet-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Private AI Training</h1>
+            <p>Confidential Machine Learning with Fully Homomorphic Encryption</p>
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 20px;">
+                <p><strong>⚠️ Demo Notice:</strong> This is a demo interface. The actual smart contract at the specified address may have authorization requirements. If transactions fail due to "Not authorized trainer" errors, it means the deployed contract requires permission from the contract owner.</p>
+            </div>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <div class="status">
+                    <div class="status-indicator" id="connectionStatus"></div>
+                    <span id="connectionText">Not Connected</span>
+                </div>
+                <div id="walletAddress"></div>
+                <button class="connect-btn" id="connectBtn">Connect Wallet</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="stats-container">
+            <h2>Network Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalModels">0</div>
+                    <div class="stat-label">Total Models</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSessions">0</div>
+                    <div class="stat-label">Training Sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="userRewards">0</div>
+                    <div class="stat-label">Your Rewards</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="isAuthorized">❌</div>
+                    <div class="stat-label">Trainer Status</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="isOwner">❌</div>
+                    <div class="stat-label">Owner Status</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>🤖 Create AI Model</h2>
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px;">
+                    <strong>Note:</strong> If you get "Not authorized trainer" error, contact the contract owner for authorization or deploy the demo version of the contract.
+                </div>
+                <div class="form-group">
+                    <label for="modelWeights">Initial Weights (comma-separated):</label>
+                    <input type="text" id="modelWeights" placeholder="100,200,150,300" />
+                </div>
+                <div class="form-group">
+                    <label for="modelBiases">Initial Biases (comma-separated):</label>
+                    <input type="text" id="modelBiases" placeholder="10,20,30" />
+                </div>
+                <button class="btn" id="createModelBtn">Create Model</button>
+            </div>
+
+            <div class="card">
+                <h2>🎓 Start Training Session</h2>
+                <div class="form-group">
+                    <label for="sessionModelId">Model ID:</label>
+                    <input type="number" id="sessionModelId" placeholder="0" />
+                </div>
+                <div class="form-group">
+                    <label for="learningRate">Learning Rate:</label>
+                    <input type="number" id="learningRate" placeholder="100" />
+                </div>
+                <button class="btn" id="startSessionBtn">Start Session</button>
+            </div>
+
+            <div class="card">
+                <h2>📊 Contribute Training Data</h2>
+                <div class="form-group">
+                    <label for="dataSessionId">Training Session ID:</label>
+                    <input type="number" id="dataSessionId" placeholder="0" />
+                </div>
+                <div class="form-group">
+                    <label for="trainingFeatures">Features (comma-separated):</label>
+                    <input type="text" id="trainingFeatures" placeholder="50,75,100,125" />
+                </div>
+                <div class="form-group">
+                    <label for="trainingLabel">Label (0-255):</label>
+                    <input type="number" id="trainingLabel" placeholder="1" min="0" max="255" />
+                </div>
+                <button class="btn" id="contributeBtn">Contribute Data</button>
+            </div>
+
+            <div class="card">
+                <h2>⚡ Training Operations</h2>
+                <div class="form-group">
+                    <label for="trainSessionId">Session ID:</label>
+                    <input type="number" id="trainSessionId" placeholder="0" />
+                </div>
+                <button class="btn" id="trainBtn">Perform Training Step</button>
+                <button class="btn" id="completeBtn" style="margin-top: 10px;">Complete Training</button>
+            </div>
+
+            <div class="card">
+                <h2>👑 Authorization Management</h2>
+                <div id="ownerSection" style="display: none;">
+                    <button class="btn" id="authorizeSelfBtn" style="background: #2ed573; margin-bottom: 15px;">Authorize My Address</button>
+                    <div class="form-group">
+                        <label for="trainerAddress">Trainer Address:</label>
+                        <input type="text" id="trainerAddress" placeholder="0x..." />
+                    </div>
+                    <button class="btn" id="authorizeBtn">Authorize Trainer</button>
+                    <button class="btn" id="revokeBtn" style="background: #ff4757; margin-top: 10px;">Revoke Trainer</button>
+                </div>
+                <div id="notOwnerSection">
+                    <p>Only the contract owner can authorize trainers.</p>
+                    <button class="btn" id="requestBtn">Request Authorization</button>
+                    <div id="authRequestInfo" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-family: monospace; font-size: 12px; word-break: break-all;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💰 Rewards & Withdrawal</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4>Available Rewards</h4>
+                        <div id="availableRewards">0</div>
+                    </div>
+                </div>
+                <button class="btn" id="withdrawBtn">Withdraw Rewards</button>
+            </div>
+
+            <div class="card">
+                <h2>ℹ️ Model Information</h2>
+                <div class="form-group">
+                    <label for="infoModelId">Model ID:</label>
+                    <input type="number" id="infoModelId" placeholder="0" />
+                </div>
+                <button class="btn" id="getInfoBtn">Get Model Info</button>
+                <div id="modelInfoDisplay"></div>
+            </div>
+
+            <div class="card">
+                <h2>📈 Session Information</h2>
+                <div class="form-group">
+                    <label for="infoSessionId">Session ID:</label>
+                    <input type="number" id="infoSessionId" placeholder="0" />
+                </div>
+                <button class="btn" id="getSessionBtn">Get Session Info</button>
+                <div id="sessionInfoDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONTRACT_ADDRESS = "0x9892738a836A2a511096dc2855AfF0489cB6e840";
+        const CONTRACT_ABI = [
+            "function createModel(uint32[] memory initialWeights, uint32[] memory initialBiases) external returns (uint256)",
+            "function startTrainingSession(uint256 modelId, uint32 learningRate) external returns (uint256)",
+            "function contributeTrainingData(uint256 sessionId, uint32[] memory features, uint8 label) external",
+            "function performTrainingStep(uint256 sessionId) external",
+            "function completeTraining(uint256 sessionId) external",
+            "function withdrawRewards() external",
+            "function authorizeTrainer(address trainer) external",
+            "function revokeTrainer(address trainer) external",
+            "function getModelInfo(uint256 modelId) external view returns (uint256, uint256, address, bool, uint256)",
+            "function getSessionInfo(uint256 sessionId) external view returns (uint256, uint256, uint256, uint256, bool, uint256)",
+            "function getContributorRewards(address contributor) external view returns (uint256)",
+            "function modelCount() external view returns (uint256)",
+            "function trainingSessionCount() external view returns (uint256)",
+            "function authorizedTrainers(address) external view returns (bool)",
+            "function owner() external view returns (address)",
+            "event ModelCreated(uint256 indexed modelId, address indexed trainer)",
+            "event TrainingSessionStarted(uint256 indexed sessionId, uint256 indexed modelId)",
+            "event DataContributed(uint256 indexed sessionId, address indexed contributor, uint256 dataIndex)",
+            "event TrainingCompleted(uint256 indexed sessionId, uint256 accuracy)",
+            "event RewardDistributed(address indexed contributor, uint256 amount)"
+        ];
+
+        let provider;
+        let signer;
+        let contract;
+        let userAddress;
+
+        // Connect wallet
+        document.getElementById('connectBtn').addEventListener('click', async function() {
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    userAddress = await signer.getAddress();
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+                    document.getElementById('connectionStatus').classList.add('connected');
+                    document.getElementById('connectionText').textContent = 'Connected';
+                    document.getElementById('walletAddress').textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+                    document.getElementById('connectBtn').textContent = 'Connected';
+                    document.getElementById('connectBtn').disabled = true;
+
+                    await loadStats();
+                    showAlert('Wallet connected successfully!', 'success');
+                } else {
+                    showAlert('Please install MetaMask!', 'error');
+                }
+            } catch (error) {
+                console.error('Connection failed:', error);
+                showAlert('Failed to connect wallet: ' + error.message, 'error');
+            }
+        });
+
+        // Load stats
+        async function loadStats() {
+            if (!contract) return;
+
+            try {
+                const totalModels = await contract.modelCount();
+                const totalSessions = await contract.trainingSessionCount();
+                const userRewards = await contract.getContributorRewards(userAddress);
+                const isAuthorized = await contract.authorizedTrainers(userAddress);
+                const owner = await contract.owner();
+                const isOwner = userAddress.toLowerCase() === owner.toLowerCase();
+
+                document.getElementById('totalModels').textContent = totalModels.toString();
+                document.getElementById('totalSessions').textContent = totalSessions.toString();
+                document.getElementById('userRewards').textContent = userRewards.toString();
+                document.getElementById('isAuthorized').textContent = isAuthorized ? '✅' : '❌';
+                document.getElementById('isOwner').textContent = isOwner ? '✅' : '❌';
+                document.getElementById('availableRewards').textContent = userRewards.toString();
+
+                // Show/hide sections based on ownership
+                if (isOwner) {
+                    document.getElementById('ownerSection').style.display = 'block';
+                    document.getElementById('notOwnerSection').style.display = 'none';
+                } else {
+                    document.getElementById('ownerSection').style.display = 'none';
+                    document.getElementById('notOwnerSection').style.display = 'block';
+                }
+
+                // Hide authorization alert - treat connected wallet as authorized for UI
+                const authAlert = document.getElementById('authAlert');
+                if (authAlert) {
+                    authAlert.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Create model
+        document.getElementById('createModelBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const weightsInput = document.getElementById('modelWeights').value;
+            const biasesInput = document.getElementById('modelBiases').value;
+
+            if (!weightsInput || !biasesInput) {
+                showAlert('Please enter both weights and biases!', 'error');
+                return;
+            }
+
+            try {
+                const weights = weightsInput.split(',').map(w => parseInt(w.trim()));
+                const biases = biasesInput.split(',').map(b => parseInt(b.trim()));
+
+                const btn = document.getElementById('createModelBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Creating Model...';
+
+                const tx = await contract.createModel(weights, biases);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Model created successfully!', 'success');
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to create model:', error);
+                if (error.message.includes('Not authorized trainer')) {
+                    showAlert('Contract requires authorization. Please contact the contract owner or check if you need to be authorized first.', 'error');
+                } else {
+                    showAlert('Failed to create model: ' + error.message, 'error');
+                }
+            } finally {
+                const btn = document.getElementById('createModelBtn');
+                btn.disabled = false;
+                btn.textContent = 'Create Model';
+            }
+        });
+
+        // Contribute data
+        document.getElementById('contributeBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const sessionId = document.getElementById('dataSessionId').value;
+            const featuresInput = document.getElementById('trainingFeatures').value;
+            const label = document.getElementById('trainingLabel').value;
+
+            if (!sessionId || !featuresInput || !label) {
+                showAlert('Please fill in all fields!', 'error');
+                return;
+            }
+
+            try {
+                const features = featuresInput.split(',').map(f => parseInt(f.trim()));
+
+                const btn = document.getElementById('contributeBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Contributing Data...';
+
+                const tx = await contract.contributeTrainingData(sessionId, features, label);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Training data contributed successfully!', 'success');
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to contribute data:', error);
+                showAlert('Failed to contribute data: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('contributeBtn');
+                btn.disabled = false;
+                btn.textContent = 'Contribute Data';
+            }
+        });
+
+        // Start training session
+        document.getElementById('startSessionBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const modelId = document.getElementById('sessionModelId').value;
+            const learningRate = document.getElementById('learningRate').value;
+
+            if (!modelId || !learningRate) {
+                showAlert('Please enter model ID and learning rate!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('startSessionBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Starting Session...';
+
+                const tx = await contract.startTrainingSession(modelId, learningRate);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Training session started successfully!', 'success');
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to start session:', error);
+                showAlert('Failed to start session: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('startSessionBtn');
+                btn.disabled = false;
+                btn.textContent = 'Start Session';
+            }
+        });
+
+        // Perform training step
+        document.getElementById('trainBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const sessionId = document.getElementById('trainSessionId').value;
+            if (!sessionId) {
+                showAlert('Please enter session ID!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('trainBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Training...';
+
+                const tx = await contract.performTrainingStep(sessionId);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Training step completed successfully!', 'success');
+            } catch (error) {
+                console.error('Failed to perform training:', error);
+                showAlert('Failed to perform training: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('trainBtn');
+                btn.disabled = false;
+                btn.textContent = 'Perform Training Step';
+            }
+        });
+
+        // Complete training
+        document.getElementById('completeBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const sessionId = document.getElementById('trainSessionId').value;
+            if (!sessionId) {
+                showAlert('Please enter session ID!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('completeBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Completing...';
+
+                const tx = await contract.completeTraining(sessionId);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Training completed successfully!', 'success');
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to complete training:', error);
+                showAlert('Failed to complete training: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('completeBtn');
+                btn.disabled = false;
+                btn.textContent = 'Complete Training';
+            }
+        });
+
+        // Authorize self (quick action for owner)
+        document.getElementById('authorizeSelfBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('authorizeSelfBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Authorizing...';
+
+                const tx = await contract.authorizeTrainer(userAddress);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Your address has been authorized successfully!', 'success');
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to authorize self:', error);
+                showAlert('Failed to authorize your address: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('authorizeSelfBtn');
+                btn.disabled = false;
+                btn.textContent = 'Authorize My Address';
+            }
+        });
+
+        // Authorize trainer
+        document.getElementById('authorizeBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const trainerAddress = document.getElementById('trainerAddress').value;
+            if (!trainerAddress) {
+                showAlert('Please enter trainer address!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('authorizeBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Authorizing...';
+
+                const tx = await contract.authorizeTrainer(trainerAddress);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Trainer authorized successfully!', 'success');
+                document.getElementById('trainerAddress').value = '';
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to authorize trainer:', error);
+                showAlert('Failed to authorize trainer: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('authorizeBtn');
+                btn.disabled = false;
+                btn.textContent = 'Authorize Trainer';
+            }
+        });
+
+        // Revoke trainer
+        document.getElementById('revokeBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const trainerAddress = document.getElementById('trainerAddress').value;
+            if (!trainerAddress) {
+                showAlert('Please enter trainer address!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('revokeBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Revoking...';
+
+                const tx = await contract.revokeTrainer(trainerAddress);
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Trainer authorization revoked successfully!', 'success');
+                document.getElementById('trainerAddress').value = '';
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to revoke trainer:', error);
+                showAlert('Failed to revoke trainer: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('revokeBtn');
+                btn.disabled = false;
+                btn.textContent = 'Revoke Trainer';
+            }
+        });
+
+        // Request authorization
+        document.getElementById('requestBtn').addEventListener('click', async function() {
+            try {
+                const owner = await contract.owner();
+                const message = `Authorization Request:
+
+My Address: ${userAddress}
+Contract Owner: ${owner}
+Contract: ${CONTRACT_ADDRESS}
+
+Please authorize me as a trainer.`;
+
+                const authRequestInfo = document.getElementById('authRequestInfo');
+                authRequestInfo.innerHTML = `
+                    <strong>Authorization Request:</strong><br><br>
+                    Your Address: ${userAddress}<br>
+                    Contract Owner: ${owner}<br>
+                    Contract: ${CONTRACT_ADDRESS}<br><br>
+                    <button class="btn" onclick="copyToClipboard('${message.replace(/'/g, '\\\'').replace(/\n/g, '\\n')}')" style="margin-top: 10px; padding: 8px 16px; font-size: 12px;">Copy Request</button>
+                `;
+                authRequestInfo.style.display = 'block';
+                showAlert('Authorization request generated. Please copy and send to the contract owner.', 'success');
+            } catch (error) {
+                console.error('Failed to request authorization:', error);
+                showAlert('Failed to generate authorization request: ' + error.message, 'error');
+            }
+        });
+
+        // Withdraw rewards
+        document.getElementById('withdrawBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('withdrawBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Withdrawing...';
+
+                const tx = await contract.withdrawRewards();
+                showAlert('Transaction submitted. Waiting for confirmation...', 'success');
+
+                const receipt = await tx.wait();
+                showAlert('Rewards withdrawn successfully!', 'success');
+                await loadStats();
+            } catch (error) {
+                console.error('Failed to withdraw rewards:', error);
+                showAlert('Failed to withdraw rewards: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('withdrawBtn');
+                btn.disabled = false;
+                btn.textContent = 'Withdraw Rewards';
+            }
+        });
+
+        // Get model info
+        document.getElementById('getInfoBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const modelId = document.getElementById('infoModelId').value;
+            if (!modelId) {
+                showAlert('Please enter model ID!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('getInfoBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Loading...';
+
+                const info = await contract.getModelInfo(modelId);
+                const infoDisplay = document.getElementById('modelInfoDisplay');
+
+                infoDisplay.innerHTML = `
+                    <div class="info-grid" style="margin-top: 20px;">
+                        <div class="info-item">
+                            <h4>Training Rounds</h4>
+                            <div>${info[0].toString()}</div>
+                        </div>
+                        <div class="info-item">
+                            <h4>Accuracy</h4>
+                            <div>${info[1].toString()}%</div>
+                        </div>
+                        <div class="info-item">
+                            <h4>Trainer</h4>
+                            <div>${info[2].slice(0, 6)}...${info[2].slice(-4)}</div>
+                        </div>
+                        <div class="info-item">
+                            <h4>Status</h4>
+                            <div>${info[3] ? 'Complete' : 'Training'}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to get model info:', error);
+                showAlert('Failed to get model info: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('getInfoBtn');
+                btn.disabled = false;
+                btn.textContent = 'Get Model Info';
+            }
+        });
+
+        // Get session info
+        document.getElementById('getSessionBtn').addEventListener('click', async function() {
+            if (!contract) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+
+            const sessionId = document.getElementById('infoSessionId').value;
+            if (!sessionId) {
+                showAlert('Please enter session ID!', 'error');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('getSessionBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading"></div> Loading...';
+
+                const info = await contract.getSessionInfo(sessionId);
+                const infoDisplay = document.getElementById('sessionInfoDisplay');
+
+                infoDisplay.innerHTML = `
+                    <div class="info-grid" style="margin-top: 20px;">
+                        <div class="info-item">
+                            <h4>Model ID</h4>
+                            <div>${info[0].toString()}</div>
+                        </div>
+                        <div class="info-item">
+                            <h4>Data Count</h4>
+                            <div>${info[1].toString()}</div>
+                        </div>
+                        <div class="info-item">
+                            <h4>Contributors</h4>
+                            <div>${info[5].toString()}</div>
+                        </div>
+                        <div class="info-item">
+                            <h4>Status</h4>
+                            <div>${info[4] ? 'Active' : 'Completed'}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to get session info:', error);
+                showAlert('Failed to get session info: ' + error.message, 'error');
+            } finally {
+                const btn = document.getElementById('getSessionBtn');
+                btn.disabled = false;
+                btn.textContent = 'Get Session Info';
+            }
+        });
+
+        // Copy to clipboard helper
+        function copyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showAlert('Authorization request copied to clipboard!', 'success');
+            } catch (err) {
+                showAlert('Please manually copy the request details above.', 'error');
+            } finally {
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alertContainer.appendChild(alert);
+            setTimeout(() => {
+                if (alertContainer.contains(alert)) {
+                    alertContainer.removeChild(alert);
+                }
+            }, 5000);
+        }
+
+        // Auto-connect if wallet was previously connected
+        window.addEventListener('load', async () => {
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                document.getElementById('connectBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
